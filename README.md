@@ -5,12 +5,16 @@
 [![CI](https://github.com/DelmarMG91/pycliphist/actions/workflows/ci.yml/badge.svg)](https://github.com/DelmarMG91/pycliphist/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![PyPI](https://img.shields.io/badge/pypi-v0.1.0-informational.svg)](https://pypi.org/project/pycliphist/)
+[![PyPI](https://img.shields.io/badge/pypi-v0.2.0-informational.svg)](https://pypi.org/project/pycliphist/)
 
 `pycliphist` watches your system clipboard in the background, records every
 distinct change in a local SQLite database, and gives you a fast command-line
 interface to list, search, retrieve, and prune that history. It uses only the
 Python standard library, so there is nothing to compile and no services to run.
+
+![pycliphist demo](docs/demo.gif)
+
+*Animated walkthrough: `add`, `list`, `search`, and `get --raw`.*
 
 ## Features
 
@@ -30,13 +34,13 @@ Python standard library, so there is nothing to compile and no services to run.
 
 ## Install
 
-With [pipx](https://pipx.pypa.io/) (recommended for command-line tools):
+From PyPI:
 
 ```console
 $ pipx install pycliphist
 ```
 
-With pip, from a checkout:
+From a checkout:
 
 ```console
 $ git clone https://github.com/DelmarMG91/pycliphist.git
@@ -68,6 +72,22 @@ $ pycliphist list --limit 5
 ```
 
 ## Usage
+
+### `pycliphist add`
+
+Store a clip without waiting for the clipboard watcher. Pass the text as an
+argument, or omit it to read from standard input — handy in pipelines.
+
+```console
+$ pycliphist add "SELECT * FROM users;"
+Added clip 1.
+
+$ echo "piped text" | pycliphist add
+Added clip 2.
+```
+
+Consecutive duplicates of the most recent clip are skipped and reported as
+`Not added: duplicate of the most recent clip.`
 
 ### `pycliphist start`
 
@@ -233,6 +253,12 @@ On Windows (PowerShell):
 ```powershell
 $env:PYCLIPHIST_DB = "$HOME\clips.db"
 ```
+
+## Documentation
+
+- [docs/USAGE.md](docs/USAGE.md) — complete command reference.
+- [docs/DESIGN.md](docs/DESIGN.md) — storage schema, guarantees, module map.
+- [docs/EXAMPLES.md](docs/EXAMPLES.md) — everyday recipes.
 
 ## Development
 

@@ -5,6 +5,6 @@ stores every distinct change in a local SQLite database, and lets you list,
 search, retrieve, and prune your clipboard history.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = ["__version__"]

@@ -55,6 +55,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", metavar="command")
 
+    p_add = sub.add_parser("add", help="Add a clip from an argument or stdin.")
+    p_add.add_argument(
+        "text",
+        nargs="?",
+        default=None,
+        metavar="TEXT",
+        help="Clip text to store; omit to read from stdin.",
+    )
+    p_add.set_defaults(func=cmd_add)
+
     p_start = sub.add_parser("start", help="Watch the clipboard and record changes.")
     p_start.add_argument(
         "--interval",
@@ -108,6 +118,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_stats.set_defaults(func=cmd_stats)
 
     return parser
+
+
+def cmd_add(args: argparse.Namespace) -> int:
+    """Store a clip passed as an argument or read from standard input."""
+    if args.text is not None:
+        content = args.text
+    else:
+        if sys.stdin is None or sys.stdin.isatty():
+            print(
+                "pycliphist: no text given and stdin is a terminal", file=sys.stderr
+            )
+            return 2
+        content = sys.stdin.read()
+    with Store(resolve_db_path()) as store:
+        new_id = store.add(content)
+    if new_id is None:
+        print("Not added: duplicate of the most recent clip.")
+        return 0
+    print(f"Added clip {new_id}.")
+    return 0
 
 
 def cmd_start(args: argparse.Namespace) -> int:

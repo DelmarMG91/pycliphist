@@ -1,10 +1,12 @@
 """Tests for the pycliphist command-line interface."""
 
+import io
 import json
 
 import pytest
 
 from pycliphist import cli
+from pycliphist import __version__
 from pycliphist.formatting import preview
 from pycliphist.store import Store
 
@@ -27,7 +29,7 @@ def test_version_prints_version(capsys):
     with pytest.raises(SystemExit) as excinfo:
         cli.main(["--version"])
     assert excinfo.value.code == 0
-    assert "pycliphist 0.1.0" in capsys.readouterr().out
+    assert "pycliphist {0}".format(__version__) in capsys.readouterr().out
 
 
 def test_help_lists_commands(capsys):
@@ -115,3 +117,38 @@ def test_preview_truncation():
     assert preview("x" * 100, width=10) == "x" * 9 + "…"
     assert len(preview("x" * 100, width=10)) == 10
     assert preview("  a \n b  ") == "a b"
+
+
+def test_add_from_argument(capsys, temp_db):
+    assert cli.main(["add", "hello clipboard"]) == 0
+    assert "Added clip 1." in capsys.readouterr().out
+    assert cli.main(["list", "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["content"] == "hello clipboard"
+
+
+def test_add_from_stdin(capsys, temp_db, monkeypatch):
+    monkeypatch.setattr("sys.stdin", io.StringIO("piped text"))
+    assert cli.main(["add"]) == 0
+    assert "Added clip 1." in capsys.readouterr().out
+    assert cli.main(["get", "1", "--raw"]) == 0
+    assert capsys.readouterr().out == "piped text"
+
+
+def test_add_duplicate_of_latest_is_skipped(capsys, temp_db):
+    assert cli.main(["add", "dup"]) == 0
+    capsys.readouterr()
+    assert cli.main(["add", "dup"]) == 0
+    assert "duplicate" in capsys.readouterr().out.lower()
+    assert cli.main(["stats"]) == 0
+    assert "Total clips: 1" in capsys.readouterr().out
+
+
+def test_add_without_text_and_tty_errors(capsys, temp_db, monkeypatch):
+    class _TTY(io.StringIO):
+        def isatty(self):
+            return True
+
+    monkeypatch.setattr("sys.stdin", _TTY(""))
+    assert cli.main(["add"]) == 2
+    assert "stdin is a terminal" in capsys.readouterr().err
